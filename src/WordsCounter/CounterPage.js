@@ -154,6 +154,10 @@ function CounterPage() {
         } else if (option === "الارقام") {
           setText(text.text.replace(/[0-9٠-٩]/g, ""));
           localStorage.setItem("text", text.text.replace(/[0-9٠-٩]/g, ""));
+        } else if (option === "الاعداد") {
+          handleConvertNumbers();
+        } else if (option === "الرموز") {
+          setText(text.text.replace(/\?/g, "؟"));
         }
       }
     };
@@ -485,11 +489,7 @@ function CounterPage() {
                 iconName={faLanguage}
                 handle={handleHarakat}
               />
-              <ButtonUp
-                title="تحويل"
-                iconName={faRepeat}
-                handle={handleHarakat}
-              />
+
               <ButtonUp
                 title="تقدم"
                 iconName={faArrowRight}
@@ -517,6 +517,13 @@ function CounterPage() {
                 takeop={["txt", "doc", "pdf"]}
                 iconName={faDownload}
                 title={"تحميل"}
+                size={"w-14"}
+              />
+              <DropDownList
+                text={text}
+                takeop={["الاعداد", "الرموز"]}
+                iconName={faRepeat}
+                title={"تحويل"}
                 size={"w-14"}
               />
             </div>
@@ -588,15 +595,7 @@ function CounterPage() {
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap justify-center w-full">
-              <button
-                style={{ fontFamily: "Cairo", fontWeight: "500" }}
-                onClick={handleConvertNumbers}
-                className="p-2 my-1 mx-1 bg-[#57BD91] rounded-lg"
-              >
-                تحويل الارقام
-              </button>
-            </div>
+
             {/*<button
               style={{ fontFamily: "Cairo", fontWeight: "500" }}
               onClick={getMostFrequentWords}
