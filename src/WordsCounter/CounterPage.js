@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import grippie from "../imgs/grippie.png";
 import { SettingsModel } from "../models/SettingsModel";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
+import DropDownList from "./DropDownList";
+import ButtonUp from "./ButtonUp";
 import {
   faLanguage,
   faArrowLeft,
@@ -20,49 +21,9 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 
 import Select from "react-select";
-import download from "downloadjs";
 import "react-tooltip/dist/react-tooltip.css";
 import { Tooltip } from "react-tooltip";
-function countUniqueWords(text) {
-  const words = text.toLowerCase().split(/\s+/).filter(Boolean);
-  const wordFreq = {};
-  let uniqueCount = 0;
-
-  words.forEach(function (word) {
-    if (!wordFreq[word]) {
-      wordFreq[word] = 0;
-    }
-    wordFreq[word]++;
-  });
-
-  for (const word in wordFreq) {
-    if (wordFreq[word] === 1) {
-      uniqueCount++;
-    } else {
-      uniqueCount += 1;
-    }
-  }
-
-  return uniqueCount;
-}
-
-function ButtonUp({ title, iconName, handle }) {
-  return (
-    <button
-      className="p-1 sm:p-2 my-5 max-sm:my-2 mx-1 bg-[#57BD91] rounded-lg"
-      onClick={handle}
-      style={{ maxWidth: "100%" }}
-    >
-      <div className="flex flex-col items-center">
-        <FontAwesomeIcon
-          icon={iconName}
-          className="text-base sm:text-lg lg:text-xl"
-        />
-        <span className="mt-1 text-xs sm:text-sm lg:text-base">{title}</span>
-      </div>
-    </button>
-  );
-}
+import { countUniqueWords, removeArabicHarakat } from "../utils/utils";
 
 function CounterPage() {
   const [text, setText] = useState("");
@@ -129,111 +90,10 @@ function CounterPage() {
       });
   };
 
-  function DropDownList(text) {
-    const [isOpen, setIsOpen] = useState(false);
-    const options = text.takeop;
-
-    const dropdownRef = useRef(null);
-    const handleJob = (option, text) => {
-      if (text.text) {
-        if (option === "doc" || option === "txt" || option === "pdf") {
-          const fileContent = text.text;
-          const fileName =
-            text.text.slice(0, 10).replace(/\s/, "-") + `.${option}`; // Define the file name
-
-          download(fileContent, fileName, "text/plain");
-        } else if (option === "الكل") {
-          setText("");
-          localStorage.setItem("text", "");
-        } else if (option === "الحركات") {
-          setText(removeArabicHarakat(text.text));
-          localStorage.setItem("text", removeArabicHarakat(text.text));
-        } else if (option === "التطويل") {
-          setText(text.text.replace(/ـ/g, ""));
-          localStorage.setItem("text", text.text.replace(/ـ/g, ""));
-        } else if (option === "الارقام") {
-          setText(text.text.replace(/[0-9٠-٩]/g, ""));
-          localStorage.setItem("text", text.text.replace(/[0-9٠-٩]/g, ""));
-        } else if (option === "الاعداد") {
-          handleConvertNumbers();
-        } else if (option === "الرموز") {
-          setText(text.text.replace(/\?/g, "؟"));
-        }
-      }
-    };
-
-    function handleOptionClick(option) {
-      handleJob(option, text);
-      setIsOpen(false);
-    }
-
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-
-    useEffect(() => {
-      window.addEventListener("click", handleClickOutside);
-      return () => {
-        window.removeEventListener("click", handleClickOutside);
-      };
-    }, []);
-    return (
-      <div className="relative z-10 inline-block text-left" ref={dropdownRef}>
-        <div>
-          <button
-            type="button"
-            className="p-1 sm:p-2 mt-5 max-sm:mt-2 mx-1 bg-[#57BD91] rounded-lg"
-            id="options-menu"
-            onClick={() => setIsOpen(!isOpen)}
-            aria-haspopup="true"
-            aria-expanded={isOpen}
-          >
-            <div className="flex flex-col items-center">
-              <FontAwesomeIcon
-                icon={text.iconName}
-                className="text-base sm:text-lg lg:text-xl"
-              />
-              <span className="mt-1 text-xs sm:text-sm lg:text-base">
-                {text.title}
-              </span>
-            </div>
-          </button>
-        </div>
-
-        {isOpen && (
-          <div
-            className={
-              "absolute right-0 mt-2 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" +
-              text.size
-            }
-            role="menu"
-            aria-orientation="vertical"
-            aria-labelledby="options-menu"
-          >
-            <div className="py-1" role="none">
-              {options.map((option) => (
-                <button
-                  key={option}
-                  className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                  role="menuitem"
-                  onClick={() => handleOptionClick(option)}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const handleReverse = () => {
-    setText(text.split("").reverse().join(""));
+  const handleReverse = useCallback(() => {
+    setText((prevText) => prevText.split("").reverse().join(""));
     localStorage.setItem("text", text.split("").reverse().join(""));
-  };
+  }, [text]);
 
   const handleUndo = () => {
     if (textareaRef.current) {
@@ -269,8 +129,6 @@ function CounterPage() {
     setHeight(newHeight);
   }
   document.body.style.backgroundColor = "#F3F4F6";
-  const removeArabicHarakat = (text) =>
-    text.replace(/[\u0617-\u061A\u064B-\u0652\u0657-\u065F]/g, "");
 
   let wordCount = 0;
   let characterCount = 0;
@@ -280,34 +138,32 @@ function CounterPage() {
     characterCount = text.length;
   }
 
+  const removeTatwel = (text) => text.replace(/ـ/g, "");
+  const removeSpaces = (text) => text.replace(/ /g, "");
+  const removeNumbers = (text) => text.replace(/[\d\u0660-\u0669]+/g, "");
+
+  const transformations = {
+    harakat: removeArabicHarakat,
+    tatwel: removeTatwel,
+    spaces: removeSpaces,
+    numbers: removeNumbers,
+  };
+
   if (selectedOptions) {
     const values = selectedOptions.map((option) => option.value);
-    let modifiedText = text;
-    if (values.includes("harakat")) {
-      modifiedText = removeArabicHarakat(modifiedText);
-    }
-    if (values.includes("tatwel")) {
-      modifiedText = modifiedText.replace(/ـ/g, "");
-    }
-    if (values.includes("spaces")) {
-      modifiedText = modifiedText.replace(/ /g, "");
-    }
-    if (values.includes("numbers")) {
-      modifiedText = modifiedText.replace(/[\d\u0660-\u0669]+/g, "");
-    }
+
+    const modifiedText = values.reduce((currentText, value) => {
+      const transformFn = transformations[value];
+      return transformFn ? transformFn(currentText) : currentText;
+    }, text);
+
     wordCount = modifiedText
       .split(/[\s-]+/u)
       .filter((word) => word !== "").length;
+
     characterCount = modifiedText.length;
   }
 
-  const handleConvertNumbers = () => {
-    const arabicNumber = text
-      .toString()
-      .replace(/\d/g, (d) => String.fromCharCode(d.charCodeAt(0) + 1584));
-    setText(arabicNumber);
-    localStorage.setItem("text", arabicNumber);
-  };
   const handleSettingsClick = (word) => {
     setIsSettingsModelOpen(true);
   };
@@ -328,19 +184,12 @@ function CounterPage() {
     let ntext = text;
     if (selectedOptions) {
       const values = selectedOptions.map((option) => option.value);
-      if (values.includes("harakat")) {
-        const removeArabicHarakat = (text) =>
-          text.replace(/[\u0617-\u061A\u064B-\u0652\u0657-\u065F]/g, "");
-        ntext = removeArabicHarakat(text);
-      }
-      if (values.includes("tatwel")) {
-        ntext = ntext.replace(/ـ/g, "");
-      }
-      if (values.includes("spaces")) {
-        ntext = ntext.replace(/ /g, "");
-      }
-      if (values.includes("numbers")) {
-        ntext = ntext.replace(/[\d\u0660-\u0669]+/g, "");
+
+      for (const value of values) {
+        const transformFn = transformations[value];
+        if (transformFn) {
+          ntext = transformFn(ntext);
+        }
       }
     }
 
@@ -402,19 +251,12 @@ function CounterPage() {
     setText(text);
     let ntext = text;
 
-    const optionsMap = {
-      harakat: (text) => removeArabicHarakat(text),
-      tatwel: (text) => text.replace(/ـ/g, ""),
-      spaces: (text) => text.replace(/ /g, ""),
-      numbers: (text) => text.replace(/[\d\u0660-\u0669]+/g, ""),
-    };
-
     if (selectedOptions) {
       const selectedValues = selectedOptions.map((option) => option.value);
 
       selectedValues.forEach((option) => {
-        if (optionsMap[option]) {
-          ntext = optionsMap[option](ntext);
+        if (transformations[option]) {
+          ntext = transformations[option](ntext);
         }
       });
     }
@@ -437,13 +279,13 @@ function CounterPage() {
 
     setMostFrequentWords(mostFrequentWords);
     setIsSet(true);
+    if (Object.keys(mostFrequentWords).length === 0) {
+      setIsSet(false);
+    }
   };
+
   return (
     <div dir="rtl" className="flex flex-wrap h-full">
-      <style>
-        @import
-        url('https://fonts.googleapis.com/css2?family=Amiri&family=Cairo:wght@500&family=Changa:wght@500&family=Tajawal:wght@500&display=swap');
-      </style>
       <SettingsModel
         isOpen={isSettingsModelOpen}
         handleClose={() => setIsSettingsModelOpen(false)}
@@ -457,21 +299,12 @@ function CounterPage() {
             leading-[3.6rem]
             mobile:leading-[2.4rem]
             font-medium
-            text-center"
-            style={{ fontFamily: "Cairo", fontWeight: "500" }}
+            text-center font-cairo"
           >
-            حاسب الكلمات
+            عداد الكلمات
           </h1>
-          <div
-            className="py-2 sm:px-0"
-            style={{ fontFamily: "Cairo", fontWeight: "500" }}
-          >
+          <div className="py-2 sm:px-0 font-cairo">
             <div className="flex flex-wrap justify-center w-full">
-              {/*<ButtonUp
-                title="حذف"
-                iconName={faTrashCan}
-                handle={handleClear}
-  />*/}
               <ButtonUp
                 title="الاعدادت"
                 iconName={faGear}
@@ -483,6 +316,7 @@ function CounterPage() {
                 iconName={faTrashCan}
                 title={"حذف"}
                 size={"w-20"}
+                setText={setText}
               />
               <ButtonUp
                 title="تشكيل"
@@ -507,17 +341,13 @@ function CounterPage() {
               />
               <ButtonUp title="نسخ" iconName={faClone} handle={handleCopy} />
               <ButtonUp title="لصق" iconName={faPaste} handle={handlePaste} />
-              {/*<ButtonUp
-                title="تحميل"
-                iconName={faDownload}
-                handle={handleDownload}
-  />*/}
               <DropDownList
                 text={text}
                 takeop={["txt", "doc", "pdf"]}
                 iconName={faDownload}
                 title={"تحميل"}
                 size={"w-14"}
+                setText={setText}
               />
               <DropDownList
                 text={text}
@@ -525,14 +355,9 @@ function CounterPage() {
                 iconName={faRepeat}
                 title={"تحويل"}
                 size={"w-14"}
+                setText={setText}
               />
             </div>
-
-            {/*<input
-              className="p-2 border border-gray-300 rounded-md opacity-0 focus:outline-none focus:border-blue-500"
-              type="file"
-              onChange={handleFileChange}
-  />*/}
 
             <div className="w-1/4 px-2 mb-2 max-lg:w-1/2 max-sm:w-full">
               <Select
@@ -583,10 +408,7 @@ function CounterPage() {
                   });
                 }}
               />
-              <div
-                style={{ fontFamily: "Cairo", fontWeight: "500" }}
-                className="flex max-sm:w-11/12 max-lg:w-9/12 py-1 justify-center w-full rounded-b-xl bg-[#57BD91]"
-              >
+              <div className="flex font-cairo max-sm:w-11/12 max-lg:w-9/12 py-1 justify-center w-full rounded-b-xl bg-[#57BD91]">
                 <p className="ml-4">
                   <span className="font-bold">{wordCount}</span> كلمة
                 </p>
@@ -595,23 +417,12 @@ function CounterPage() {
                 </p>
               </div>
             </div>
-
-            {/*<button
-              style={{ fontFamily: "Cairo", fontWeight: "500" }}
-              onClick={getMostFrequentWords}
-              className="p-4 my-5 bg-[#57BD91] rounded-lg"
-            >
-              تحليل
-  </button>*/}
           </div>
         </div>
       </div>
       <div className="flex flex-col items-center justify-center w-full ml-4 max-sm:ml-0 md:w-1/6">
-        <div className="flex-grow pt-6 sm:px-0">
-          <table
-            style={{ fontFamily: "Cairo", fontWeight: "500" }}
-            className="w-full overflow-hidden rounded-lg table-auto max-sm:w-11/12 max-lg:w-10/12"
-          >
+        <div className="flex-grow pt-6 mb-4 sm:px-0">
+          <table className="w-full overflow-hidden rounded-lg table-auto font-cairo max-sm:w-11/12 max-lg:w-10/12">
             <thead>
               <tr className="bg-[#57BD91]">
                 <th colSpan="2" className="px-4 py-2 text-center">
@@ -667,10 +478,7 @@ function CounterPage() {
             </tbody>
           </table>
           {isSet ? (
-            <table
-              style={{ fontFamily: "Cairo", fontWeight: "500" }}
-              className="w-full mt-4 overflow-hidden rounded-lg table-auto max-sm:w-11/12 max-lg:w-10/12"
-            >
+            <table className="w-full mt-4 overflow-hidden rounded-lg table-auto font-cairo max-sm:w-11/12 max-lg:w-10/12">
               <thead>
                 <tr className="bg-[#57BD91]">
                   <th className="px-4 py-2 text-center">الكلمة</th>
@@ -699,62 +507,3 @@ function CounterPage() {
 }
 
 export default CounterPage;
-
-{
-  /*<div dir="rtl" className="flex flex-col items-center">
-      <style>
-        @import
-        url('https://fonts.googleapis.com/css2?family=Cairo:wght@500&display=swap');
-      </style>
-      <textarea
-        className="w-4/5 p-2 mt-16 border-t-2 border-gray-300 resize-none border-x-2 max-sm:w-11/12 rounded-t-xl focus:outline-none"
-        rows="15"
-        value={text}
-        style={{ fontFamily: "Cairo", fontWeight: "500" }}
-        onChange={(event) => setText(event.target.value)}
-        placeholder="ادخل النص هنا..."
-      />
-      <div
-        style={{ fontFamily: "Cairo", fontWeight: "500" }}
-        className="flex py-1 justify-center w-4/5 max-sm:w-11/12 rounded-b-xl bg-[#57BD91]"
-      >
-        <p className="ml-4">
-          <span className="font-bold">{wordCount}</span> كلمة
-        </p>
-        <p>
-          <span className="font-bold">{characterCount}</span> حرف
-        </p>
-      </div>
-      <button
-        style={{ fontFamily: "Cairo", fontWeight: "500" }}
-        onClick={getMostFrequentWords}
-        className="p-4 my-5 bg-[#57BD91] rounded-lg"
-      >
-        تحليل
-      </button>
-
-      {isSet ? (
-        <table
-          style={{ fontFamily: "Cairo", fontWeight: "500" }}
-          className="w-1/2 overflow-hidden rounded-lg table-auto max-sm:w-11/12"
-        >
-          <thead>
-            <tr className="bg-[#57BD91]">
-              <th className="px-4 py-2 text-center">الكلمة</th>
-              <th className="px-4 py-2 text-center">تكرارها</th>
-            </tr>
-          </thead>
-          <tbody className="border-b-2 border-gray-300 rounded-lg border-x-2">
-            {idk.map(({ word, frequency }) => (
-              <tr key={word} className="text-center bg-white hover:bg-gray-100">
-                <td className="px-4 py-2">{word}</td>
-                <td className="px-4 py-2">{frequency}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        ""
-      )}
-    </div>*/
-}
