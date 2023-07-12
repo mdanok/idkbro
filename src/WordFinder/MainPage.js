@@ -133,7 +133,7 @@ function MainPage() {
       }
       setIsLoading(true);
       const response = await fetch(
-        `https://apitest.mdanok.repl.co/api/search?letters=${value}&page=1${flink}&dictionary=${selectedOption}`
+        `https://ooedodk-74qqn8dz3-mdanok.vercel.app/v1/wordfinder?letters=${value}&page=1${flink}&dictionary=${selectedOption}`
       );
       const data = await response.json();
       setWordsList(data.words_list);
@@ -158,7 +158,7 @@ function MainPage() {
     try {
       setIsLoadingMore(true);
       const response = await fetch(
-        `https://apitest.mdanok.repl.co/api/search?letters=${inputValue}&length=${key}&page=${
+        `https://ooedodk-74qqn8dz3-mdanok.vercel.app/v1/wordfinder?letters=${inputValue}&length=${key}&page=${
           pages[key] + 1
         }&dictionary=${selectedOption}`
       );
