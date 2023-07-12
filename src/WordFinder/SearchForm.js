@@ -175,6 +175,12 @@ placeholder-[#D3D3D3]
                     >
                       القاموس العربي
                     </option>
+                    <option
+                      value="names"
+                      className="text-black bg-white mobile:text-base"
+                    >
+                      قاموس الأسماء
+                    </option>
                   </select>
                   <button
                     href=""
