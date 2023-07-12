@@ -13,7 +13,7 @@ function MainPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const [selectedOption, setSelectedOption] = useState("wwf2");
+  const [selectedOption, setSelectedOption] = useState("quran");
   const [startsValue, setStartsValue] = useState("");
   const [endsValue, setEndsValue] = useState("");
   const [containsValue, setContiansValue] = useState("");
